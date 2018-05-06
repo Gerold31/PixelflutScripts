@@ -1,0 +1,6 @@
+#!/bin/bash
+
+ip=`ifconfig wlan0 | grep "inet addr" | sed -r 's/.*inet addr:([^ ]*) .*/\1/'`
+port=$1
+
+echo -ne '\necho "HELP" | \n nc '$ip' '$port | ./text.py localhost $port
