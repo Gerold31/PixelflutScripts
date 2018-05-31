@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ "$3" = "" ] || [ "$3" = "latest" ]; then
+	baseurl="https://xkcd.com/"
+elif [ "$3" = "random" ]; then
+	baseurl="https://c.xkcd.com/random/comic/"
+else
+	baseurl="https://xkcd.com/$3/"
+fi
+
+imgurl=`curl -sL $baseurl | tr '\n' ' ' | sed -r 's/.*<div id="comic"> <[^>]*src="([^"]*)".*<\/div>.*/\1/'`
+
+
+curl -s "https:"$imgurl -o xkcd.png
+
+./printImg.py $1 $2 xkcd.png -i 
+
+rm xkcd.png 
+
