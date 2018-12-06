@@ -31,7 +31,6 @@ class LedScreen(threading.Thread):
 				self._clr_image[r[0]][r[1]] = r[2]
 				self._work[r[0]][r[1]] -= 1
 
-		
 
 	def _read_px(self, x, y):
 		with self._lock:
@@ -53,9 +52,9 @@ class LedScreen(threading.Thread):
 		y = int(y)
 		if x < 0 or x >= self.size_x or y < 0 or y >= self.size_y:
 			return
+		if self.image[x][y] == c and not force:
+			return
 		if immediate:
-			if self.image[x][y] == c and not force:
-				return
 			if clearable:
 				self._read_px(x, y)
 			self._matrix.send(x, y, c)
