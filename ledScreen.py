@@ -15,7 +15,7 @@ class LedScreen(threading.Thread):
 		self.size_y = self._matrix.size_y
 	
 		self._clr_image = [ [0] * self.size_y for i in range(self.size_x)]
-		self.image = [ [0] * self.size_y for i in range(self.size_x)]
+		self.image = [ [None] * self.size_y for i in range(self.size_x)]
 		self.delta_image = [ [None] * self.size_y for i in range(self.size_x)]
 		self._work = [ [0] *self.size_y for i in range(self.size_x)]
 

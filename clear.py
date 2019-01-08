@@ -5,12 +5,12 @@ import time
 import random
 import math
 
-from ledMatrix import LedMatrix
+from ledScreen import LedScreen
 
-LedMatrix = LedMatrix(sys.argv[1], sys.argv[2])
+screen = LedScreen(sys.argv[1], sys.argv[2])
 
-panel_x = LedMatrix.size_x
-panel_y = LedMatrix.size_y
+panel_x = screen.size_x
+panel_y = screen.size_y
 
 f = (panel_x+panel_y)/(math.pi/2)
 
@@ -23,5 +23,5 @@ for da in range(int(f * 2*math.pi)):
 			break
 		if y < 0 or y >= panel_y:
 			break
-		LedMatrix.send(x, y, 0)
+		screen.set_px(x, y, 0)
 	#time.sleep(0.05)
