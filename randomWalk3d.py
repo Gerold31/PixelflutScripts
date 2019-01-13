@@ -7,12 +7,13 @@ import argparse
 import math
 
 from ledScreen import LedScreen
+from octree import Octree
 
 parser = argparse.ArgumentParser(description = "3D Random Walk animation for a PixelFlut screen")
 parser.add_argument("ip")
 parser.add_argument("port")
-parser.add_argument("-s", metavar="sleep", help="delay between steps", type=float, default = 0)
-parser.add_argument("-r", metavar="radius", help="radius of the sphere", type=int, default = 500)
+parser.add_argument("-s", metavar="steps", help="steps between rendering", type=int, default = 1)
+parser.add_argument("-r", metavar="radius", help="radius of the sphere", type=int, default = 32)
 parser.add_argument("-fov", metavar="", help="field of view of the camera", type=int, default = 45)
 
 args = parser.parse_args()
@@ -22,11 +23,11 @@ if args.fov <= 0 or args.fov >= 180:
 	sys.exit(1)
 
 fov_tan = math.tan(args.fov/2*math.pi/180)
-cam_r = 1.1*args.r/math.sin(args.fov/2*math.pi/180)
+cam_r = 2.1*args.r/math.sin(args.fov/2*math.pi/180)
 
 t = time.time() 
 
-map = {}
+map = Octree(args.r*2)
 
 def rand_c():
 	while True:
@@ -92,28 +93,18 @@ def render(a):
 	aspect = panel_x/panel_y
 
 	for x in range(panel_x):
-		print("%5.2f%%" % (x/panel_x*100), end = '\r')
+#		print("%5.2f%%" % (x/panel_x*100), end = '\r')
 		dx = (2 * ((x+0.5) / panel_x) - 1) * fov_tan * aspect
 		for y in range(panel_y):
 			dy = (1 - 2 * ((y+0.5) / panel_y)) * fov_tan
 			
 			ray_d = rot_y(norm([dx, dy, -1]), a)
 
-			hit = False
-			for i in range(2*args.r):
-				k = i + cam_r-args.r
-				p = add(cam_pos, mul(ray_d, k))
-
-				mx = int(p[0])
-				my = int(p[1])
-				mz = int(p[2])
-				if mx in map and my in map[mx] and mz in map[mx][my] and map[mx][my][mz] != 0:
-					screen.set_px(x, y, map[mx][my][mz], immediate=False)
-					hit=True
-					break
-	
-			if not hit:
-				screen.set_px(x, y, 0, immediate=False)
+			hit, _ = map.trace(cam_pos, ray_d)
+			if hit is None:
+				hit = 0
+			
+			screen.set_px(x, y, hit, immediate=False)
 
 	screen.send()
 
@@ -126,44 +117,27 @@ z = 0
 
 #render()
 
-num = 0
+t = 0
 
 while True:
-	if x not in map:
-		map[x] = {}
-	if y not in map[x]:
-		map[x][y] = {}
+	for i in range(args.s):
+		map.set([x,y,z], c)
 
-	map[x][y][z] = c
+		dx, dy, dz = random.choice([(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)])
+		x += dx
+		y += dy
+		z += dz
+		steps += 1
+		t += 1
 
-	dx, dy, dz = random.choice([(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)])
-	x += dx
-	y += dy
-	z += dz
-	steps += 1
+		if x*x + y*y + z*z > args.r**2:
+			print(steps)
+			x = 0
+			y = 0
+			z = 0
+			steps = 0
+			c = rand_c()
 
-	if x*x + y*y + z*z > args.r**2:
-		print(steps)
-		x = 0
-		y = 0
-		z = 0
-		steps = 0
-		c = rand_c()
-		#render()
-		num += 1
-		if num >= 10:
-			break
-	
-	#if time.time() - t > 0.1:
-		#t = time.time()
-		#render()
-
-#	time.sleep(0.001)			
-
-
-for i in range(360):
-	render(i*5/180*math.pi)
-
-
+	render(t / 180 * math.pi)
 
 
