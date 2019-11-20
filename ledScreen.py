@@ -37,15 +37,26 @@ class LedScreen(threading.Thread):
 			self._work[x][y] += 1
 		self._matrix.schedule_read(x, y)
 
+	def _fetch_read_result(self, x, y):
+		while self._work[x][y] > 0:
+			pass
+		self.image[x][y] = self._clr_image[x][y]
+		
+
 	def read_screen(self):
 		for x in range(self.size_x):
 			for y in range(self.size_y):
 				self._read_px(x, y)
 		for x in range(self.size_x):
 			for y in range(self.size_y):
-				while self._work[x][y] > 0:
-					pass
-				self.image[x][y] = self._clr_image[x][y]
+				self._fetch_read_result(x, y)
+
+	def get_px(self, x, y, local=True):
+		if not local:
+			self._read_px(x, y)
+			self._fetch_read_result(x, y)
+
+		return self.image[x][y]
 
 	def set_px(self, x, y, c, clearable = False, force = False, immediate = True):
 		x = int(x)
