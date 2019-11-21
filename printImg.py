@@ -3,9 +3,9 @@
 import sys
 import argparse
 
-from PIL import Image
+from PIL import Image, ImageSequence
 
-from ledMatrix import LedMatrix
+from ledScreen import LedScreen
 
 
 parser = argparse.ArgumentParser(description = "Sends a image to a PixelFlut screen")
@@ -13,31 +13,40 @@ parser.add_argument("ip")
 parser.add_argument("port")
 parser.add_argument("img")
 parser.add_argument("-i", action="store_true", help="Invert the image")
+parser.add_argument("-l", action="store_true", help="Loop the image sequence (gif)")
 
 args = parser.parse_args()
 
-LedMatrix = LedMatrix(args.ip, args.port)
+screen = LedScreen(args.ip, args.port)
 
-size = LedMatrix.size_x, LedMatrix.size_y
+size = screen.size_x, screen.size_y
+
 
 try:
-	im = Image.open(args.img)
-	im.thumbnail(size, Image.ANTIALIAS)
-	im = im.convert("RGB")
+	seq = Image.open(args.img)
+	while True:
+		for im in ImageSequence.Iterator(seq):
+			temp = im.copy()
+			temp.thumbnail(size, Image.ANTIALIAS)
+			temp = temp.convert("RGB")
 
-	off_x = (size[0] - im.size[0])//2
-	off_y = (size[1] - im.size[1])//2
+			off_x = (size[0] - temp.size[0])//2
+			off_y = (size[1] - temp.size[1])//2
+	
+			for x in range(temp.size[0]):
+				for y in range(temp.size[1]):
+					c = temp.getpixel((x, y))
+					c = c[0] << 16 | c[1] << 8 | c[2]
 
-	for x in range(im.size[0]):
-		for y in range(im.size[1]):
-			c = im.getpixel((x, y))
-			c = c[0] << 16 | c[1] << 8 | c[2]
+					if args.i:
+						c ^= 0xffffff
 
-			if args.i:
-				c ^= 0xffffff
+					screen.set_px(x+off_x, y+off_y, c, immediate = False)
 
-			LedMatrix.send(x+off_x, y+off_y, c)
-
+			screen.send()
+		
+		if not args.l:
+			break
 
 
 except IOError:
