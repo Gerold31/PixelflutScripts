@@ -128,7 +128,7 @@ class Trail:
 		col = rand_c()
 		ttl = self.ttl
 
-		if (char_x, char_y) in final_text and random.randrange(1) < 0.333:
+		if (char_x, char_y) in final_text and random.randrange(3) < 1:
 			f = final_text[(char_x, char_y)]
 			char = f["char"]
 			f["drawn"] = True
