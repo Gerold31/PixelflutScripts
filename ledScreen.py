@@ -16,7 +16,7 @@ class LedScreen(threading.Thread):
 	
 		self._clr_image = [ [0] * self.size_y for i in range(self.size_x)]
 		self.image = [ [None] * self.size_y for i in range(self.size_x)]
-		self.delta_image = [ [None] * self.size_y for i in range(self.size_x)]
+		self.delta_image = {}
 		self._work = [ [0] *self.size_y for i in range(self.size_x)]
 
 		self._lock = threading.Lock()
@@ -63,23 +63,23 @@ class LedScreen(threading.Thread):
 		y = int(y)
 		if x < 0 or x >= self.size_x or y < 0 or y >= self.size_y:
 			return
-		if self.image[x][y] == c and not force:
-			return
 		if immediate:
+			if self.image[x][y] == c and not force:
+				return
 			if clearable:
 				self._read_px(x, y)
 			self._matrix.send(x, y, c)
 			self.image[x][y] = c
 
 		else:
-			self.delta_image[x][y] = c
+			if ((x, y) not in self.delta_image and self.image[x][y] == c) and not force:
+				return
+			self.delta_image[(x, y)] = c
 
 	def send(self):
-		for x in range(self.size_x):
-			for y in range(self.size_y):
-				if self.delta_image[x][y] != None:
-					self.set_px(x, y, self.delta_image[x][y])
-					self.delta_image[x][y] = None	
+		for (x, y) in self.delta_image:
+			self.set_px(x, y, self.delta_image[(x, y)])
+		self.delta_image = {}
 
 	
 	def clr_px(self, x, y):
